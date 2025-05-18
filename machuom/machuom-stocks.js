@@ -1,0 +1,78 @@
+export const adminAdress =''
+export const adminBalance = 0;
+export const adminETF = [];
+
+ // Core stock data
+export const stocks = [
+  { id: 1, name: 'companyA', quantity: 120 },
+  { id: 2, name: 'companyB', quantity: 100 },
+  { id: 3, name: 'companyC', quantity: 150 },
+  // Additional companies as needed
+];
+
+export const etfList = [];
+
+// ETF type constants
+export const ETF_TYPES = {
+  ENERGY: 'energy',
+  TECHNOLOGY: 'technology',
+  HEALTHCARE: 'healthcare',
+};
+
+// Simple ETF factory
+export function factorycreateETF(_ETFname) {
+  return {
+    id: Date.now(),
+    type: _ETFname
+  };
+}
+
+export const eligibleStocks = 
+[
+  {
+    required: 100,
+    companies: ['companyA', 'companyB', 'companyC'],
+    name:'energy ETF'
+  },
+]
+
+ // Function to create an ETF
+export function createETF(eligibleStocks) {
+  const companies = eligibleStocks.companies;
+  const requiredStocks = eligibleStocks.required;
+  const ETFname = eligibleStocks.name;
+  
+  // Build a lookup map for constant-time access
+  const stockMap = Object.fromEntries(stocks.map(s => [s.name, s]));
+  
+  // Verify availability
+  const allAvailable = companies.every(name => {
+    const stock = stockMap[name];
+    return stock && stock.quantity >=requiredStocks;
+  });
+
+  if (!allAvailable) {
+    console.error('Not enough stocks to create an ETF.');
+  } else {
+     // Deduct shares
+     companies.forEach(name => {
+     stockMap[name].quantity -= eligibleStocks.required;
+     });
+  }
+
+  // Create and return the new ETF
+  return factorycreateETF(ETFname) ;
+}
+createETF(eligibleStocks[0]);
+addOrAccumulateETF()
+console.log(etfList);
+
+export function addOrAccumulateETF(newETF) {
+  const existingETF = etfList.find(etf => etf.type === newETF.type);
+  if (existingETF) {
+    // If found, increase the ETF's quantity, or perform other accumulation logic
+    existingETF.quantity ++ 
+  } else {
+    etfList.push(newETF);
+  }
+}
