@@ -1,5 +1,4 @@
 export const adminAdress =''
-export const adminBalance = 0;
 export const adminETF = [];
 
  // Core stock data
@@ -63,8 +62,6 @@ export function createETF(eligibleStocks) {
   // Create and return the new ETF
   return factorycreateETF(ETFname) ;
 }
-createETF(eligibleStocks[0]);
-addOrAccumulateETF()
 console.log(etfList);
 
 export function addOrAccumulateETF(newETF) {
@@ -75,4 +72,16 @@ export function addOrAccumulateETF(newETF) {
   } else {
     etfList.push(newETF);
   }
+}
+
+export function createAddEtf(){
+  // Process all eligible stocks to create ETFs and add them to etfList.
+eligibleStocks.forEach(eligible => {
+  const newETF = createETF(eligible);
+  if (newETF) {
+    addOrAccumulateETF(newETF);
+  }
+});
+
+console.log(etfList);
 }
