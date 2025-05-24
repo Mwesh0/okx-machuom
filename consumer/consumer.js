@@ -1,7 +1,7 @@
 import {qrObject, traderETF, qrCodes} from '..trader/trader.js';
 import {etfList, adminETF } from "../machuom/machuom-stocks.js";
 
-export let consumerAdress = ''
+export let consumerAdress;
 export let consumerBalance = 0;
 export let consumerETFs = [];
 
@@ -33,7 +33,7 @@ export function awardETFFromQRCode(qrObject) {
         traderETF.push({ ...etf, quantity: traderReward });
       }
       // Award admin ETF: accumulate quantity if same type already awarded
-      const existingAdminETF = adminETFs.find(item => item.type === etf.type);
+      const existingAdminETF = adminETF.find(item => item.type === etf.type);
       if (existingAdminETF) {
         existingAdminETF.quantity += adminReward;
       } else {
@@ -44,6 +44,7 @@ export function awardETFFromQRCode(qrObject) {
 }
 
 export function scanQrcode(codeId, consumerAdress){
+  const qrCodes = qrCodes;
   const qrCode = qrCodes.find(qr => qr.id === codeId);
   if (!qrCode) {
     throw new Error('QR code not found');
@@ -57,7 +58,6 @@ export function scanQrcode(codeId, consumerAdress){
     qrCode.consumerAdress = consumerAdress;
   }
 
-  qrCode.consumerAdress = consumerAdress;
   qrCode.status = 'scanned';
   qrCode.rewardSent = true;
 

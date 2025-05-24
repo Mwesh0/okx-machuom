@@ -2,14 +2,15 @@ export const adminAdress =''
 export const adminETF = [];
 
  // Core stock data
-export const stocks = [
+export const stocks = 
+[
   { id: 1, name: 'companyA', quantity: 120 },
   { id: 2, name: 'companyB', quantity: 100 },
   { id: 3, name: 'companyC', quantity: 150 },
   // Additional companies as needed
 ];
 
-export const etfList = [];
+  export const etfList = [];
 
 // ETF type constants
 export const ETF_TYPES = {
@@ -22,7 +23,8 @@ export const ETF_TYPES = {
 export function factorycreateETF(_ETFname) {
   return {
     id: Date.now(),
-    type: _ETFname
+    type: _ETFname,
+    quantity: 1
   };
 }
 
@@ -37,9 +39,9 @@ export const eligibleStocks =
 
  // Function to create an ETF
 export function createETF(eligibleStocks) {
-  const companies = eligibleStocks.companies;
-  const requiredStocks = eligibleStocks.required;
-  const ETFname = eligibleStocks.name;
+  const requiredStocks = eligibleStocks
+  const companies = requiredStocks.companies;
+  const ETFname = requiredStocks.name;
   
   // Build a lookup map for constant-time access
   const stockMap = Object.fromEntries(stocks.map(s => [s.name, s]));
@@ -55,7 +57,7 @@ export function createETF(eligibleStocks) {
   } else {
      // Deduct shares
      companies.forEach(name => {
-     stockMap[name].quantity -= eligibleStocks.required;
+     stockMap[name].quantity -= requiredStocks.required;
      });
   }
 
