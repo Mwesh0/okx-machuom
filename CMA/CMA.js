@@ -9,7 +9,3 @@ function updateStockQuantity(companyName, addedAmount) {
   stock.quantity += addedAmount;
   console.log(`Updated ${companyName} quantity: ${stock.quantity}`);
 }
-
-// Example usage:
-updateStockQuantity('companyA', 30); // companyA quantity changes from 120 to 150
-updateStockQuantity('companyB', 20); // companyB quantity changes from 100 to 80

@@ -39,17 +39,15 @@ export const eligibleStocks =
 
  // Function to create an ETF
 export function createETF(eligibleStocks) {
+  const stockMap = Object.fromEntries(stocks.map(s => [s.name, s]));
   const requiredStocks = eligibleStocks
   const companies = requiredStocks.companies;
   const ETFname = requiredStocks.name;
-  
-  // Build a lookup map for constant-time access
-  const stockMap = Object.fromEntries(stocks.map(s => [s.name, s]));
-  
+   
   // Verify availability
   const allAvailable = companies.every(name => {
     const stock = stockMap[name];
-    return stock && stock.quantity >=requiredStocks;
+    return stock && stock.quantity >=requiredStocks.required;
   });
 
   if (!allAvailable) {
@@ -70,7 +68,7 @@ export function addOrAccumulateETF(newETF) {
   const existingETF = etfList.find(etf => etf.type === newETF.type);
   if (existingETF) {
     // If found, increase the ETF's quantity, or perform other accumulation logic
-    existingETF.quantity ++ 
+    existingETF.quantity += newETF.quantity;
   } else {
     etfList.push(newETF);
   }
@@ -78,7 +76,7 @@ export function addOrAccumulateETF(newETF) {
 
 export function createAddEtf(){
   // Process all eligible stocks to create ETFs and add them to etfList.
-eligibleStocks.forEach(eligible => {
+  eligibleStocks.forEach(eligible => {
   const newETF = createETF(eligible);
   if (newETF) {
     addOrAccumulateETF(newETF);

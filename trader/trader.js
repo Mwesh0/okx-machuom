@@ -5,10 +5,10 @@ export const traderAdress = ''
 export let qrCodes = [];
 export const traderETF = [];
 
-export function generateQrcode(adminAdress, traderAdress) {
+export function generateQrcode(adminAdress, traderAdress, consumerAdress, productPrice) {
   const codeId = 'machuom_' + uuidv4();
-  const productPrice = productPrice
-  const liquidity = liquidity;
+  const productPriceInput = productPrice
+  const LiquidityInput = calculateLiquidity(productPrice);
   
   const qrObject = {
     id: codeId,
@@ -22,14 +22,14 @@ export function generateQrcode(adminAdress, traderAdress) {
       objectDescription:'',
       objectType:'',
       objectCategory:'',
-      objectPrice: productPrice,
+      objectPrice: productPriceInput,
     },
-    reward: calculateReward(),
+    reward: calculateReward(etfPrice, LiquidityInput),
     consumerAdress: '',
     status: 'active',
     createdAt: new Date(),
     rewardSent: false,
-    liquidity: liquidity,
+    liquidity: LiquidityInput,
   };
   qrCodes.push(qrObject);
 
@@ -41,9 +41,9 @@ export function calculateLiquidity(productPrice){
   return liquidity;
 };
 
-export function calculateReward(){
+export function calculateReward(etfPrice, liquidity) {
   const liquidityValue = liquidity;
   const etfPrice = etfPrice
   liquidityValue/etfPrice;
-  return Number(reward);
+  return liquidityValue / etfPrice;
 };

@@ -1,4 +1,4 @@
-import {qrObject, traderETF, qrCodes} from '..trader/trader.js';
+import {qrObject, traderETF, qrCodes} from '../trader/trader.js';
 import {etfList, adminETF } from "../machuom/machuom-stocks.js";
 
 export let consumerAdress;
@@ -44,7 +44,6 @@ export function awardETFFromQRCode(qrObject) {
 }
 
 export function scanQrcode(codeId, consumerAdress){
-  const qrCodes = qrCodes;
   const qrCode = qrCodes.find(qr => qr.id === codeId);
   if (!qrCode) {
     throw new Error('QR code not found');
