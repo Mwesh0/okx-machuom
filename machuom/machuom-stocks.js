@@ -113,7 +113,7 @@ export function createETFsByName(etfName, quantity) {
   console.log("Final ETF list:", etfList);
 }
 
- document.querySelector('.create-etf-button').addEventListener('click', () => {
+  document.querySelector('.create-etf-button').addEventListener('click', () => {
   const etfName = document.querySelector('.etf-name-input').value;
   const quantity = parseInt(document.querySelector('.etf-quantity-input').value);
       if (!etfName || isNaN(quantity)) {

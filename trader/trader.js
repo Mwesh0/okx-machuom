@@ -1,49 +1,101 @@
 import { adminAdress } from "../machuom/machuom-stocks.js";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from 'https://jspm.dev/uuid';
 
-export const traderAdress = ''
+export const traderAdress = '';
 export let qrCodes = [];
 export const traderETF = [];
+let etfPrice = 1;
 
-export function generateQrcode(adminAdress, traderAdress, consumerAdress, productPrice) {
-  const codeId = 'machuom_' + uuidv4();
-  const productPriceInput = productPrice
-  const LiquidityInput = calculateLiquidity(productPrice);
+window.addEventListener('DOMContentLoaded', () => {
+  const generateButton = document.querySelector('.generate-item-Qr');
+  if (!generateButton) {
+    console.error("generate-item-Qr button not found.");
+    return;
+  }
+
+  generateButton.addEventListener('click', () => {
+    const productPriceValue = parseFloat(document.querySelector('.object-price-input').value);
+    if (isNaN(productPriceValue)) {
+      console.error("Invalid product price. Please enter a numerical value.");
+      return;
+    }
+
+    const newQr = generateQrcode(adminAdress, traderAdress, '', productPriceValue);
+    console.log("QR Code generated:", newQr);
+    console.log("QR Codes array:", qrCodes);
+  });
+});
+
+
+// Example implementation for calculateLiquidity: 1% of product price.
+export function calculateLiquidity(productPrice) {
+  return productPrice * 0.01;
+}
+
+// Example implementation for calculateReward:
+export function calculateReward(etfPrice, liquidity) {Y6
+  if (etfPrice === 0) {
+    console.error("ETF Price is zero - cannot calculate reward.");
+    return 0;
+  }
+  return liquidity / etfPrice;
+}
+
+//counter error
+const nameElem = document.querySelector('.object-name-input');
+if (!nameElem) {
+  console.error("object-name-input element not found.");
+}
+const descriptionElem = document.querySelector('.object-description-input');
+if (!descriptionElem) {
+  console.error("object-description-input element not found.");
+}
+const typeElem = document.querySelector('.object-type-input');
+if (!typeElem) {
+  console.error("object-type-input element not found.");
+}
+const categoryElem = document.querySelector('.object-category-input');
+if (!categoryElem) {
+  console.error("object-category-input element not found.");
+}
+const priceElem = document.querySelector('.object-price-input');
+if (!priceElem) {
+  console.error("object-price-input element not found.");
+}
+const generateButton = document.querySelector('.generate-item-Qr');
+if (!generateButton) {
+  console.error("generate-item-Qr button not found.");
+}
+
+export function generateQrcode(adminAddress, traderAddress, consumerAddress, productPrice) {
+  const codeId = 'machuom_' + Math.random().toString(36).substring(2, 8) + '_' + uuidv4();
+  const liquidityInput = calculateLiquidity(productPrice);
+  const reward = calculateReward(etfPrice, liquidityInput);
   
   const qrObject = {
     id: codeId,
-    adresses:{
-      adminAdress: adminAdress,
-      consumerAdress: consumerAdress,
-      traderAdress: traderAdress,
+    adresses: {
+      adminAdress: adminAddress,
+      consumerAdress: consumerAddress, // remains empty initially
+      traderAdress: traderAddress,
     },
     details: {
-      objectName:'',
-      objectDescription:'',
-      objectType:'',
-      objectCategory:'',
-      objectPrice: productPriceInput,
+      objectName: document.querySelector('.object-name-input').value,
+      objectDescription: document.querySelector('.object-description-input').value,
+      objectType: document.querySelector('.object-type-input').value,
+      objectCategory: document.querySelector('.object-category-input').value,
+      objectPrice: document.querySelector('.object-price-input').value,
     },
-    reward: calculateReward(etfPrice, LiquidityInput),
+    reward: reward,
     consumerAdress: '',
     status: 'active',
     createdAt: new Date(),
     rewardSent: false,
-    liquidity: LiquidityInput,
+    liquidity: liquidityInput,
+    liquidityProvided: false,
   };
+  // Add the new QR code to the array
   qrCodes.push(qrObject);
-
   return qrObject;
 }
 
-export function calculateLiquidity(productPrice){
-  const liquidity = productPrice * 0.01;
-  return liquidity;
-};
-
-export function calculateReward(etfPrice, liquidity) {
-  const liquidityValue = liquidity;
-  const etfPrice = etfPrice
-  liquidityValue/etfPrice;
-  return liquidityValue / etfPrice;
-};
