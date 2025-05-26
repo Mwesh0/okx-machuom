@@ -1,9 +1,35 @@
-import {qrObject, traderETF, qrCodes} from '../trader/trader.js';
+import { traderETF, qrCodes} from '../trader/trader.js';
 import {etfList, adminETF } from "../machuom/machuom-stocks.js";
 
 export let consumerAdress;
 export let consumerBalance = 0;
 export let consumerETFs = [];
+
+ // Wait until the DOM is fully loaded
+    window.addEventListener('DOMContentLoaded', () => {
+      const scanButton = document.querySelector('.scan-qr-button');
+      if (!scanButton) {
+        console.error("Scan QR button not found.");
+        return;
+      }
+      
+      scanButton.addEventListener('click', () => {
+        const codeId = document.querySelector('.qr-code-input').value;
+        const consumerAdress = document.querySelector('.consumer-adress-input').value;
+  
+        if (!codeId || !consumerAdress) {
+          console.error("Please enter both the QR code ID and your consumer address.");
+          return;
+        }
+  
+        try {
+          const result = scanQrcode(codeId, consumerAdress);
+          console.log("QR Code successfully scanned:", result);
+        } catch (error) {
+          console.error("Error scanning QR Code:", error.message);
+        }
+      });
+    });
 
 //award sector based ETF
 export function awardETFFromQRCode(qrObject) {

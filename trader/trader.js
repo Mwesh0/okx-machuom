@@ -33,7 +33,7 @@ export function calculateLiquidity(productPrice) {
 }
 
 // Example implementation for calculateReward:
-export function calculateReward(etfPrice, liquidity) {Y6
+export function calculateReward(etfPrice, liquidity) {
   if (etfPrice === 0) {
     console.error("ETF Price is zero - cannot calculate reward.");
     return 0;
@@ -42,30 +42,7 @@ export function calculateReward(etfPrice, liquidity) {Y6
 }
 
 //counter error
-const nameElem = document.querySelector('.object-name-input');
-if (!nameElem) {
-  console.error("object-name-input element not found.");
-}
-const descriptionElem = document.querySelector('.object-description-input');
-if (!descriptionElem) {
-  console.error("object-description-input element not found.");
-}
-const typeElem = document.querySelector('.object-type-input');
-if (!typeElem) {
-  console.error("object-type-input element not found.");
-}
-const categoryElem = document.querySelector('.object-category-input');
-if (!categoryElem) {
-  console.error("object-category-input element not found.");
-}
-const priceElem = document.querySelector('.object-price-input');
-if (!priceElem) {
-  console.error("object-price-input element not found.");
-}
-const generateButton = document.querySelector('.generate-item-Qr');
-if (!generateButton) {
-  console.error("generate-item-Qr button not found.");
-}
+
 
 export function generateQrcode(adminAddress, traderAddress, consumerAddress, productPrice) {
   const codeId = 'machuom_' + Math.random().toString(36).substring(2, 8) + '_' + uuidv4();
