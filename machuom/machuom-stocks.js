@@ -12,13 +12,6 @@ export const stocks =
 
   export const etfList = [];
 
-// ETF type constants
-export const ETF_TYPES = {
-  ENERGY: 'energy',
-  TECHNOLOGY: 'technology',
-  HEALTHCARE: 'healthcare',
-};
-
 // Simple ETF factory
 export function factorycreateETF(_ETFname) {
   return {
@@ -35,6 +28,16 @@ export const eligibleStocks =
     companies: ['companyA', 'companyB', 'companyC'],
     name:'energy ETF'
   },
+  {
+    required: 50,
+    companies: ['companyD', 'companyE' , 'companyF'],
+    name:'technology ETF'
+  },
+  {
+    required: 75,
+    companies: ['companyG', 'companyH', 'companyI'],
+    name:'healthcare ETF'
+  }
 ]
 
  // Function to create an ETF
@@ -52,6 +55,7 @@ export function createETF(eligibleStocks) {
 
   if (!allAvailable) {
     console.error('Not enough stocks to create an ETF.');
+    return null;
   } else {
      // Deduct shares
      companies.forEach(name => {
@@ -85,3 +89,36 @@ export function createAddEtf(){
 
 console.log(etfList);
 }
+
+// ... [existing code above remains unchanged]
+
+export function createETFsByName(etfName, quantity) {
+  // Find the eligible configuration by matching the ETF name (case sensitive)
+  const eligible = eligibleStocks.find(e => e.name === etfName);
+  if (!eligible) {
+    console.error(`Eligible configuration for ETF "${etfName}" not found.`);
+    return;
+  }
+  
+  for (let i = 0; i < quantity; i++) {
+    // Attempt to create one ETF at a time
+    const newETF = createETF(eligible);
+    if (!newETF) {
+      console.error(`Conditions not met to create ETF at iteration ${i + 1}.`);
+      break;
+    } else {
+      addOrAccumulateETF(newETF);
+    }
+  }
+  console.log("Final ETF list:", etfList);
+}
+
+ document.querySelector('.create-etf-button').addEventListener('click', () => {
+  const etfName = document.querySelector('.etf-name-input').value;
+  const quantity = parseInt(document.querySelector('.etf-quantity-input').value);
+      if (!etfName || isNaN(quantity)) {
+        console.error("Invalid ETF name or quantity.");
+        return;
+      }
+      createETFsByName(etfName, quantity);
+    });
