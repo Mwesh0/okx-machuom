@@ -8,6 +8,7 @@ const awaitingForLiquidity = [];
 let ammountOfLiquidity = 0; 
 let etfPrice = 1;
 
+
 window.addEventListener('DOMContentLoaded', () => {
   const generateButton = document.querySelector('.generate-item-Qr');
   if (!generateButton) {
@@ -26,7 +27,7 @@ window.addEventListener('DOMContentLoaded', () => {
     console.log("QR Code generated:", newQr);
     console.log("QR Codes array:", qrCodes);
   });
-});
+}); 
 
 
 // Example implementation for calculateLiquidity: 1% of product price.
@@ -69,6 +70,7 @@ export function generateQrcode(adminAddress, traderAddress, consumerAddress, pro
     rewardSent: false,
     liquidity: liquidityInput,
     liquidityProvided: false,
+
   };
   ammountOfLiquidity += liquidityInput;
   // Add the new QR code to the array
@@ -86,3 +88,41 @@ export function markLiquidityAsPaid() {
   }
   console.log("Liquidity processed, updated QR Codes:", qrCodes);
 }
+
+//soarting multiple traders
+// Wrap in DOMContentLoaded to make sure HTML is ready.
+window.addEventListener('DOMContentLoaded', () => {
+  function soatMuiltipleTraders() {
+    const newProduct = document.querySelector('.New-product-select');
+    const existProduct = document.querySelector('.existing-product-select')
+    
+    newProduct.addEventListener('click', () => {
+      document.body.innerHTML = `
+        <input type="text" class="object-name-input" placeholder="Object name">
+
+        <input type="text" class="object-description-input" placeholder="Object description">
+
+        <input type="text" class="object-type-input" placeholder="Object type">
+
+        <input type="text" class="object-category-input" placeholder="Object category">
+
+        <input type="number" class="object-price-input" placeholder="Object price ksh">
+
+        <select>
+          <option>intemidiate</option>
+          <option>retailer</option>
+        </select>
+
+        <button class="generate-item-Qr">add item</button>`;
+    });
+
+    existProduct.addEventListener('click', ()=>{
+      document.body.innerHTML = `
+        <input type="text" class="exist-Qrcheck-input" placeholder="Qr code">
+        
+        <button class='veryfy-Qr-button'>Veryfy</button> `
+    })
+  }
+
+  soatMuiltipleTraders();
+});
