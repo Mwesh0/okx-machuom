@@ -4,6 +4,8 @@ import { v4 as uuidv4 } from 'https://jspm.dev/uuid';
 export const traderAdress = '';
 export let qrCodes = [];
 export const traderETF = [];
+const awaitingForLiquidity = [];
+let ammountOfLiquidity = 0; 
 let etfPrice = 1;
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -41,9 +43,6 @@ export function calculateReward(etfPrice, liquidity) {
   return liquidity / etfPrice;
 }
 
-//counter error
-
-
 export function generateQrcode(adminAddress, traderAddress, consumerAddress, productPrice) {
   const codeId = 'machuom_' + Math.random().toString(36).substring(2, 8) + '_' + uuidv4();
   const liquidityInput = calculateLiquidity(productPrice);
@@ -71,8 +70,19 @@ export function generateQrcode(adminAddress, traderAddress, consumerAddress, pro
     liquidity: liquidityInput,
     liquidityProvided: false,
   };
+  ammountOfLiquidity += liquidityInput;
   // Add the new QR code to the array
-  qrCodes.push(qrObject);
+  awaitingForLiquidity.push(qrObject);
   return qrObject;
 }
 
+export function markLiquidityAsPaid() {
+  // Process each QR code waiting for liquidity
+  while (awaitingForLiquidity.length > 0) {
+    const qrObj = awaitingForLiquidity.shift(); // Remove one from awaitingForLiquidity
+    qrObj.liquidityProvided = true; 
+    ammountOfLiquidity = 0// Mark as liquidity paid
+    qrCodes.push(qrObj);                        // Add to main QR codes array
+  }
+  console.log("Liquidity processed, updated QR Codes:", qrCodes);
+}
