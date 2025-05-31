@@ -7,14 +7,11 @@ export const traderETF = [];
 const awaitingForLiquidity = [];
 let ammountOfLiquidity = 0; 
 let etfPrice = 1;
+const tradersCircle = [];
 
 
 window.addEventListener('DOMContentLoaded', () => {
   const generateButton = document.querySelector('.generate-item-Qr');
-  if (!generateButton) {
-    console.error("generate-item-Qr button not found.");
-    return;
-  }
 
   generateButton.addEventListener('click', () => {
     const productPriceValue = parseFloat(document.querySelector('.object-price-input').value);
@@ -89,40 +86,71 @@ export function markLiquidityAsPaid() {
   console.log("Liquidity processed, updated QR Codes:", qrCodes);
 }
 
-//soarting multiple traders
-// Wrap in DOMContentLoaded to make sure HTML is ready.
 window.addEventListener('DOMContentLoaded', () => {
+  
   function soatMuiltipleTraders() {
     const newProduct = document.querySelector('.New-product-select');
-    const existProduct = document.querySelector('.existing-product-select')
+    const existProduct = document.querySelector('.existing-product-select');
     
     newProduct.addEventListener('click', () => {
       document.body.innerHTML = `
-        <input type="text" class="object-name-input" placeholder="Object name">
-
-        <input type="text" class="object-description-input" placeholder="Object description">
-
-        <input type="text" class="object-type-input" placeholder="Object type">
-
-        <input type="text" class="object-category-input" placeholder="Object category">
-
-        <input type="number" class="object-price-input" placeholder="Object price ksh">
-
-        <select>
-          <option>intemidiate</option>
-          <option>retailer</option>
-        </select>
-
-        <button class="generate-item-Qr">add item</button>`;
+        <div class="new-product-form">
+          <input type="text" class="object-name-input" placeholder="Object name">
+          <input type="text" class="object-description-input" placeholder="Object description">
+          <input type="text" class="object-type-input" placeholder="Object type">
+          <input type="text" class="object-category-input" placeholder="Object category">
+          <input type="number" class="object-price-input" placeholder="Object price ksh">
+          <select class="trader-type-select">
+            <option value="intemidiate">intemidiate</option>
+            <option value="retailer">retailer</option>
+          </select>
+          <button class="generate-item-Qr">add item</button>
+        </div>
+      `;
+      // Attach an event listener to the new "add item" button.
+      const addItemBtn = document.querySelector('.generate-item-Qr');
+      if (!addItemBtn) {
+        console.error("generate-item-Qr button not found after updating DOM.");
+        return;
+      }
+      addItemBtn.addEventListener('click', () => {
+        const priceValue = parseFloat(document.querySelector('.object-price-input')?.value);
+        if (isNaN(priceValue)) {
+          console.error("Invalid product price. Please enter a numerical value.");
+          return;
+        }
+        // Get the trader type selection
+        const traderType = document.querySelector('.trader-type-select')?.value;
+        if (!traderType) {
+          console.error("Trader type not selected.");
+          return;
+        }
+        // Generate a new QR code (using dummy consumer address '')
+        const newQr = generateQrcode(adminAdress, traderAdress, '', priceValue);
+        console.log("QR Code generated:", newQr);
+        // Add to the appropriate array based on the trader type
+        if(traderType.toLowerCase() === 'intemidiate'){
+          tradersCircle.push(newQr);
+          console.log("QR Code added to tradersCircle:", tradersCircle);
+        } else if(traderType.toLowerCase() === 'retailer'){
+          qrCodes.push(newQr);
+          console.log("QR Code added to qrCodes array:", qrCodes);
+        } else {
+          console.error("Unknown trader type selected:", traderType);
+        }
+      });
     });
-
-    existProduct.addEventListener('click', ()=>{
+    
+    existProduct.addEventListener('click', () => {
       document.body.innerHTML = `
-        <input type="text" class="exist-Qrcheck-input" placeholder="Qr code">
-        
-        <button class='veryfy-Qr-button'>Veryfy</button> `
-    })
+        <div class="existing-product-form">
+          <input type="text" class="exist-Qrcheck-input" placeholder="Qr code">
+          <button class="veryfy-Qr-button">Verify</button>
+        </div>
+      `;
+      // Attach event listeners for "veryfy-Qr-button" as needed.
+    });
   }
-
+  
   soatMuiltipleTraders();
 });
