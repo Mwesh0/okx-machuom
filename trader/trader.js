@@ -186,10 +186,57 @@ function verifyQrCode() {
       console.log("QR Code verified:", qrObject);
       document.body.innerHTML = `
         <div class="qr-code-details">
-          ${productDetailsTemplate}
+          <div><strong>QR Code ID:</strong> ${qrObject.id}</div>
+            <input type="text" class="object-name-input" placeholder="Object name">
+            <input type="text" class="object-description-input" placeholder="Object description">
+            <input type="text" class="object-type-input" placeholder="Object type">
+            <input type="text" class="object-category-input" placeholder="Object category">
+            <input type="number" class="object-price-input" placeholder="Object price ksh">
+            <select class="trader-type-select">
+              <option value="intemidiate">intemidiate</option>
+              <option value="retailer">retailer</option>
+            </select>
+            <button class="Existing-item-Add">add item</button>
         </div>`;
+        attachExistingItemAddListener(qrObject);
     } else {
       console.error("QR Code not found in tradersCircle:", qrCodeInput);
     }
   });
 }
+
+function attachExistingItemAddListener(qrObject) {
+  const addItemBtn = document.querySelector('.Existing-item-Add');
+  if (!addItemBtn) {
+    console.error("Existing-item-Add button not found.");
+    return;
+  }
+  addItemBtn.addEventListener('click', () => {
+    // Gather updated details from the form (if any)
+    const updatedQr = { ...qrObject };
+    updatedQr.details.objectName = document.querySelector('.object-name-input')?.value;
+    updatedQr.details.objectDescription = document.querySelector('.object-description-input')?.value;
+    updatedQr.details.objectType = document.querySelector('.object-type-input')?.value;
+    updatedQr.details.objectCategory = document.querySelector('.object-category-input')?.value;
+    updatedQr.details.objectPrice = document.querySelector('.object-price-input')?.value;
+
+    const traderType = document.querySelector('.trader-type-select')?.value;
+    if (!traderType) {
+      console.error("Trader type not selected.");
+      return;
+    }
+    // Push the updated QR object to the proper array and update localStorage
+    if (traderType.toLowerCase() === 'intemidiate') {
+      tradersCircle.push(updatedQr);
+      localStorage.setItem('tradersCircle', JSON.stringify(tradersCircle));
+      console.log("Existing item added to tradersCircle:", tradersCircle);
+    } else if(traderType.toLowerCase() === 'retailer'){
+      qrCodes.push(updatedQr);
+      localStorage.setItem('qrCodes', JSON.stringify(qrCodes));
+      console.log("Existing item added to qrCodes array:", qrCodes);
+    } else {
+      console.error("Unknown trader type selected:", traderType);
+    }
+  });
+}
+attachExistingItemAddListener(qrObject)
