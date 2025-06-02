@@ -171,9 +171,13 @@ window.addEventListener('DOMContentLoaded', () => {
   
 });
 
-// Define verifyQrCode function and call it after exist-product form is rendered.
+// Verify QR code: attach listener to the verify button after rendering the form
 function verifyQrCode() {
   const verifyButton = document.querySelector('.veryfy-Qr-button');
+  if (!verifyButton) {
+    console.error("Verify button not found.");
+    return;
+  }
   verifyButton.addEventListener('click', () => {
     const qrCodeInput = document.querySelector('.exist-Qrcheck-input').value;
     if (!qrCodeInput) {
@@ -181,30 +185,52 @@ function verifyQrCode() {
       return;
     }
     
-    const qrObject = tradersCircle.find(qr => qr.id === qrCodeInput);
+    // Get the tradersCircle from localStorage or in-memory array (assuming tradersCircle is defined globally)
+    const storedTraders = JSON.parse(localStorage.getItem('tradersCircle')) || tradersCircle;
+    const qrObject = storedTraders.find(qr => qr.id === qrCodeInput);
+    
     if (qrObject) {
       console.log("QR Code verified:", qrObject);
       document.body.innerHTML = `
         <div class="qr-code-details">
           <div><strong>QR Code ID:</strong> ${qrObject.id}</div>
-            <input type="text" class="object-name-input" placeholder="Object name">
-            <input type="text" class="object-description-input" placeholder="Object description">
-            <input type="text" class="object-type-input" placeholder="Object type">
-            <input type="text" class="object-category-input" placeholder="Object category">
-            <input type="number" class="object-price-input" placeholder="Object price ksh">
-            <select class="trader-type-select">
-              <option value="intemidiate">intemidiate</option>
-              <option value="retailer">retailer</option>
-            </select>
-            <button class="Existing-item-Add">add item</button>
+          <input type="text" class="object-name-input" placeholder="Object name" value="${qrObject.details.objectName || ''}">
+          <input type="text" class="object-description-input" placeholder="Object description" value="${qrObject.details.objectDescription || ''}">
+          <input type="text" class="object-type-input" placeholder="Object type" value="${qrObject.details.objectType || ''}">
+          <input type="text" class="object-category-input" placeholder="Object category" value="${qrObject.details.objectCategory || ''}">
+          <input type="number" class="object-price-input" placeholder="Object price ksh" value="${qrObject.details.objectPrice || ''}">
+          <select class="trader-type-select">
+            <option value="intemidiate" ${qrObject.traderType === 'intemidiate' ? 'selected' : ''}>intemidiate</option>
+            <option value="retailer" ${qrObject.traderType === 'retailer' ? 'selected' : ''}>retailer</option>
+          </select>
+          <button class="Existing-item-Add">add item</button>
         </div>`;
-        attachExistingItemAddListener(qrObject);
+      
+      // Now attach listener to the new button (using the locally verified qrObject)
+      attachExistingItemAddListener(qrObject);
     } else {
       console.error("QR Code not found in tradersCircle:", qrCodeInput);
     }
   });
 }
 
+// Guard function: checks whether a QR code is already in the qrCodes array.
+function isDuplicate(qr) {
+  return qrCodes.some(item => item.id === qr.id);
+}
+
+// Helper function: adds to qrCodes if not a duplicate; otherwise, logs a warning.
+function addToQrCodesIfNotDuplicate(qr) {
+  if (!isDuplicate(qr)) {
+    qrCodes.push(qr);
+    localStorage.setItem('qrCodes', JSON.stringify(qrCodes));
+    console.log("Existing item added to qrCodes array:", qrCodes);
+  } else {
+    console.warn(`Duplicate QR Code ${qr.id} not added.`);
+  }
+}
+
+// Attach the event listener to the "Existing-item-Add" button in the rendered form.
 function attachExistingItemAddListener(qrObject) {
   const addItemBtn = document.querySelector('.Existing-item-Add');
   if (!addItemBtn) {
@@ -212,31 +238,37 @@ function attachExistingItemAddListener(qrObject) {
     return;
   }
   addItemBtn.addEventListener('click', () => {
-    // Gather updated details from the form (if any)
+    // Gather updated details from the form
     const updatedQr = { ...qrObject };
     updatedQr.details.objectName = document.querySelector('.object-name-input')?.value;
     updatedQr.details.objectDescription = document.querySelector('.object-description-input')?.value;
     updatedQr.details.objectType = document.querySelector('.object-type-input')?.value;
     updatedQr.details.objectCategory = document.querySelector('.object-category-input')?.value;
     updatedQr.details.objectPrice = document.querySelector('.object-price-input')?.value;
-
-    const traderType = document.querySelector('.trader-type-select')?.value;
-    if (!traderType) {
+    updatedQr.traderType = document.querySelector('.trader-type-select')?.value;
+    
+    if (!updatedQr.traderType) {
       console.error("Trader type not selected.");
       return;
     }
-    // Push the updated QR object to the proper array and update localStorage
-    if (traderType.toLowerCase() === 'intemidiate') {
+    
+    if (updatedQr.traderType.toLowerCase() === 'intemidiate') {
+      // For intemidiate, simply add/update in tradersCircle.
       tradersCircle.push(updatedQr);
       localStorage.setItem('tradersCircle', JSON.stringify(tradersCircle));
       console.log("Existing item added to tradersCircle:", tradersCircle);
-    } else if(traderType.toLowerCase() === 'retailer'){
-      qrCodes.push(updatedQr);
-      localStorage.setItem('qrCodes', JSON.stringify(qrCodes));
-      console.log("Existing item added to qrCodes array:", qrCodes);
+    } else if (updatedQr.traderType.toLowerCase() === 'retailer') {
+      // Remove from tradersCircle if it exists...
+      const index = tradersCircle.findIndex(item => item.id === updatedQr.id);
+      if (index > -1) {
+        tradersCircle.splice(index, 1);
+        localStorage.setItem('tradersCircle', JSON.stringify(tradersCircle));
+        console.log(`QR Code ${updatedQr.id} removed from tradersCircle.`);
+      }
+      // Then add to qrCodes array.
+      addToQrCodesIfNotDuplicate(updatedQr);
     } else {
-      console.error("Unknown trader type selected:", traderType);
+      console.error("Unknown trader type selected:", updatedQr.traderType);
     }
   });
-}
-attachExistingItemAddListener(qrObject)
+} 
