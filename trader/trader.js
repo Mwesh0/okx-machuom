@@ -252,11 +252,18 @@ function attachExistingItemAddListener(qrObject) {
       return;
     }
     
-    if (updatedQr.traderType.toLowerCase() === 'intemidiate') {
-      // For intemidiate, simply add/update in tradersCircle.
-      tradersCircle.push(updatedQr);
-      localStorage.setItem('tradersCircle', JSON.stringify(tradersCircle));
-      console.log("Existing item added to tradersCircle:", tradersCircle);
+  if (updatedQr.traderType.toLowerCase() === 'intemidiate') {
+      // For intemidiate, update in tradersCircle:
+      const index = tradersCircle.findIndex(item => item.id === updatedQr.id);
+      if (index > -1) {
+        // Replace the old version with the new updated version.
+        tradersCircle.splice(index, 1, updatedQr);
+        console.log(`QR Code ${updatedQr.id} updated in tradersCircle.`);
+      } else {
+        // Not already present, so add.
+        tradersCircle.push(updatedQr);
+        console.log(`QR Code ${updatedQr.id} added to tradersCircle.`);
+      }
     } else if (updatedQr.traderType.toLowerCase() === 'retailer') {
       // Remove from tradersCircle if it exists...
       const index = tradersCircle.findIndex(item => item.id === updatedQr.id);
