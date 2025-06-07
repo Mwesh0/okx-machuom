@@ -1,3 +1,4 @@
+import { consumerAdress } from "../consumer/consumer.js";
 import { adminAdress } from "../machuom/machuom-stocks.js";
 import { v4 as uuidv4 } from 'https://jspm.dev/uuid';
 
@@ -8,7 +9,9 @@ export const awaitingForLiquidity = [];
 export let ammountOfLiquidity = 0; 
 export let etfPrice = 1;
 export const tradersCircle = JSON.parse(localStorage.getItem('tradersCircle')) || [];
-export let productDetailsTemplate = `
+
+export let productDetailsTemplate = 
+`
   <input type="text" class="object-name-input" placeholder="Object name">
   <input type="text" class="object-description-input" placeholder="Object description">
   <input type="text" class="object-type-input" placeholder="Object type">
@@ -19,7 +22,7 @@ export let productDetailsTemplate = `
       <option value="retailer">retailer</option>
   </select>
   <button class="generate-item-Qr">add item</button>
-  `
+`
 
 if (!localStorage.getItem('qrCodes')) {
   localStorage.setItem('qrCodes', JSON.stringify([]));
@@ -27,6 +30,29 @@ if (!localStorage.getItem('qrCodes')) {
 if (!localStorage.getItem('tradersCircle')) {
   localStorage.setItem('tradersCircle', JSON.stringify([]));
 }
+
+//traders
+function createTraderObject() {
+  const productPriceValue = document.querySelector('.object-price-input').value;
+  const traderObject = {
+    traderType: document.querySelector('.trader-type-select').value,
+    traderAdress: traderAdress,
+    ownLiquidityInput: productPriceValue*0.01, // 1% of the product price
+    reward: productPriceValue/etfPrice,
+    liquidityProvided: false,
+    rewardSent: false,
+    createdAt: new Date(),
+  },
+  details = {
+    objectName: document.querySelector('.object-name-input').value,
+    objectDescription: document.querySelector('.object-description-input').value,
+    objectType: document.querySelector('.object-type-input').value,
+    objectCategory: document.querySelector('.object-category-input').value,
+    objectPrice: productPriceValue,
+  };
+  traderObject.details = details;
+  return traderObject;
+};
 
 window.addEventListener('DOMContentLoaded', () => {
   const generateButton = document.querySelector('.generate-item-Qr');
@@ -44,25 +70,31 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 }); 
 
-
-// Example implementation for calculateLiquidity: 1% of product price.
-export function calculateLiquidity(productPrice) {
-  return productPrice * 0.01;
-}
-
 // Example implementation for calculateReward:
-export function calculateReward(etfPrice, liquidity) {
-  if (etfPrice === 0) {
-    console.error("ETF Price is zero - cannot calculate reward.");
-    return 0;
-  }
-  return liquidity / etfPrice;
+export function calculateCumulativeReward(qrObject) {
+  let ammountOfReward = 0;
+  qrObject.tradersobject.forEach(trader => {
+    if (!trader.rewardSent) {
+      ammountOfReward +=trader.reward ;
+      trader.rewardSent = true; // Mark as sent
+    }
+  })
+  return ammountOfReward;
 }
 
-export function generateQrcode(adminAddress, traderAddress, consumerAddress, productPrice) {
+function cumulativeLiquidity(qrObject) {
+  qrObject.tradersobject.forEach(trader => {
+    if (!trader.liquidityProvided) {
+      ammountOfLiquidity += trader.ownLiquidityInput;
+      trader.liquidityProvided = true; // Mark as provided
+    }
+  })
+  return ammountOfLiquidity;
+}
+
+export function generateQrcode(adminAddress, traderAddress, consumerAddress) {
+  const traderObject = createTraderObject();
   const codeId = 'machuom_' + Math.random().toString(36).substring(2, 8) + '_' + uuidv4();
-  const liquidityInput = calculateLiquidity(productPrice);
-  const reward = calculateReward(etfPrice, liquidityInput);
   
   const qrObject = {
     id: codeId,
@@ -71,25 +103,24 @@ export function generateQrcode(adminAddress, traderAddress, consumerAddress, pro
       consumerAdress: consumerAddress, // remains empty initially
       traderAdress: traderAddress,
     },
-    details: {
-      objectName: document.querySelector('.object-name-input').value,
-      objectDescription: document.querySelector('.object-description-input').value,
-      objectType: document.querySelector('.object-type-input').value,
-      objectCategory: document.querySelector('.object-category-input').value,
-      objectPrice: document.querySelector('.object-price-input').value,
-    },
-    reward: reward,
+    reward: 0,
     consumerAdress: '',
     status: 'active',
     createdAt: new Date(),
     rewardSent: false,
-    liquidity: liquidityInput,
-    liquidityProvided: false,
-
+    liquidity: 0,
+    tradersobject:[]
   };
-  ammountOfLiquidity += liquidityInput;
+  qrObject.tradersobject.push(traderObject);
+
+  qrObject.liquidity = cumulativeLiquidity(qrObject);
+  qrObject.reward = calculateCumulativeReward(qrObject);
+
   // Add the new QR code to the array
   awaitingForLiquidity.push(qrObject);
+  console.log('awaiting for liquidity array',awaitingForLiquidity)
+  console.log('qr codes',qrCodes)
+  console.log('traders circle',tradersCircle)
   return qrObject;
 }
 
@@ -97,12 +128,24 @@ export function markLiquidityAsPaid() {
   // Process each QR code waiting for liquidity
   while (awaitingForLiquidity.length > 0) {
     const qrObj = awaitingForLiquidity.shift(); // Remove one from awaitingForLiquidity
-    qrObj.liquidityProvided = true; 
-    ammountOfLiquidity = 0// Mark as liquidity paid                   
-  }
-  localStorage.setItem('qrCodes', JSON.stringify(qrCodes));
-  console.log("Liquidity processed, updated QR Codes:", qrCodes);
-}
+
+    const exactTrader = qrObj.tradersobject.find(trader => 
+      trader.traderAdress === qrObj.traderAdress)
+
+    if (exactTrader.traderType === 'intermediate') {
+      exactTrader.liquidityProvided = true;
+      tradersCircle.push(qrObj);
+      /*check and return edited */
+      localStorage.setItem('tradersCircle', JSON.stringify(tradersCircle));
+    } else if (exactTrader.traderType === 'retailer') {
+      exactTrader.liquidityProvided = true;
+      localStorage.getItem('tradersCircle');
+      tradersCircle.splice(tradersCircle.indexOf(qrObj), 1); 
+      qrCodes.push(qrObj);
+      localStorage.setItem('qrCodes', JSON.stringify(qrCodes));
+    }    
+  } return tradersCircle || qrCodes;
+} 
 
 window.addEventListener('DOMContentLoaded', () => {
   // Optionally log localStorage data on page load:
@@ -138,20 +181,8 @@ window.addEventListener('DOMContentLoaded', () => {
           return;
         }
         // Generate a new QR code (using dummy consumer address '')
-        const newQr = generateQrcode(adminAdress, traderAdress, '', priceValue);
+        const newQr = generateQrcode(adminAdress, traderAdress, consumerAdress);
         console.log("QR Code generated:", newQr);
-        // Add to the appropriate array based on the trader type
-        if(traderType.toLowerCase() === 'intemidiate'){
-          tradersCircle.push(newQr)
-          localStorage.setItem('tradersCircle', JSON.stringify(tradersCircle));
-          console.log("QR Code added to tradersCircle:", tradersCircle);
-        } else if(traderType.toLowerCase() === 'retailer'){
-          qrCodes.push(newQr);
-          localStorage.setItem('qrCodes', JSON.stringify(qrCodes));
-          console.log("QR Code added to qrCodes array:", qrCodes);
-        } else {
-          console.error("Unknown trader type selected:", traderType);
-        }
       });
     });
     
@@ -233,10 +264,6 @@ function addToQrCodesIfNotDuplicate(qr) {
 // Attach the event listener to the "Existing-item-Add" button in the rendered form.
 function attachExistingItemAddListener(qrObject) {
   const addItemBtn = document.querySelector('.Existing-item-Add');
-  if (!addItemBtn) {
-    console.error("Existing-item-Add button not found.");
-    return;
-  }
   addItemBtn.addEventListener('click', () => {
     // Gather updated details from the form
     const updatedQr = { ...qrObject };
@@ -252,7 +279,7 @@ function attachExistingItemAddListener(qrObject) {
       return;
     }
     
-  if (updatedQr.traderType.toLowerCase() === 'intemidiate') {
+    if (updatedQr.traderType.toLowerCase() === 'intemidiate') {
       // For intemidiate, update in tradersCircle:
       const index = tradersCircle.findIndex(item => item.id === updatedQr.id);
       if (index > -1) {
@@ -279,3 +306,26 @@ function attachExistingItemAddListener(qrObject) {
     }
   });
 } 
+
+document.addEventListener('DOMContentLoaded', () => {
+  const deleteLocalStorageButton = document.querySelector('.delete-Local-Storage');
+
+  deleteLocalStorageButton.addEventListener('click', () => {
+    localStorage.removeItem('qrCodes');
+    localStorage.removeItem('tradersCircle');
+    qrCodes = [];
+    tradersCircle = [];
+    console.log("Local storage cleared. qrCodes and tradersCircle are now empty.");
+  }); 
+});
+
+function displayAwaitingForLiquidity() {
+  const awaitingList = document.querySelector('.awaiting-list');
+  awaitingList.innerHTML = ''; // Clear existing content
+
+  awaitingForLiquidity.forEach(qr => {
+    const listItem = document.createElement('li');
+    listItem.textContent = `QR Code ID: ${qr.id}, Object Name: ${qr.details.objectName}`;
+    awaitingList.appendChild(listItem);
+  });
+}
