@@ -85,7 +85,6 @@ export function scanQrcode(codeId, consumerAdress){
 
   qrCode.status = 'scanned';
   qrCode.rewardSent = true;
-
   
   awardETFFromQRCode(qrCode);
   return qrCode;
