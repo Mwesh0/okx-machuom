@@ -5,12 +5,12 @@ import { v4 as uuidv4 } from 'https://jspm.dev/uuid';
 export const traderAdress = '';
 export let qrCodes = JSON.parse(localStorage.getItem('qrCodes')) || [];
 export const traderETF = [];
-export const awaitingForLiquidity = [];
+const awaitingForLiquidity =JSON.parse(localStorage.getItem('awaitingForLiquidity'))|| [];
 export let ammountOfLiquidity = 0; 
 export let etfPrice = 1;
 export const tradersCircle = JSON.parse(localStorage.getItem('tradersCircle')) || [];
 
-export let productDetailsTemplate = 
+export let newProductTemplate = 
 `
   <input type="text" class="object-name-input" placeholder="Object name">
   <input type="text" class="object-description-input" placeholder="Object description">
@@ -18,15 +18,34 @@ export let productDetailsTemplate =
   <input type="text" class="object-category-input" placeholder="Object category">
   <input type="number" class="object-price-input" placeholder="Object price ksh">
   <select class="trader-type-select">
-      <option value="intemidiate">intemidiate</option>
-      <option value="retailer">retailer</option>
+    <option value="intemidiate">intemidiate</option>
+    <option value="retailer">retailer</option>
   </select>
-  <button class="generate-item-Qr">add item</button>
+  <button class="generate-item-Qr">Generate Item QR</button>
   <ul class="awaiting-list" ></ul>
-  <button class='mark-liquidity-paid'>mark liquidity as paid</button>
+  <button class="mark-liquidity-paid">mark liquidity as paid</button>
   <ul class="traders-circle-list"></ul>
   <ul class="qr-codes-list"></ul>
 `
+// STEP 2: Template for existing product (after QR is verified)
+export let existingProductFormTemplate = (qrObject) => `
+  <div class="qr-code-details">
+    <div><strong>QR Code ID:</strong> ${qrObject.id}</div>
+    <input type="text" class="object-name-input" placeholder="Object name" value="${qrObject.details?.objectName || ''}">
+    <input type="text" class="object-description-input" placeholder="Object description" value="${qrObject.details?.objectDescription || ''}">
+    <input type="text" class="object-type-input" placeholder="Object type" value="${qrObject.details?.objectType || ''}">
+    <input type="text" class="object-category-input" placeholder="Object category" value="${qrObject.details?.objectCategory || ''}">
+    <input type="number" class="object-price-input" placeholder="Object price ksh">
+    <select class="trader-type-select">
+      <option value="intemidiate" ${qrObject.tradersobject[0]?.traderType === 'intemidiate' ? 'selected' : ''}>intemidiate</option>
+      <option value="retailer" ${qrObject.tradersobject[0]?.traderType === 'retailer' ? 'selected' : ''}>retailer</option>
+    </select>
+    <button class="Existing-item-Add">Add to Existing QR</button>
+    <ul class="awaiting-list" ></ul>
+    <button class="mark-liquidity-paid">mark liquidity as paid</button>
+    <ul class="traders-circle-list"></ul>
+    <ul class="qr-codes-list"></ul>
+  </div>`
 
 if (!localStorage.getItem('qrCodes')) {
   localStorage.setItem('qrCodes', JSON.stringify([]));
@@ -99,6 +118,7 @@ function cumulativeLiquidity(qrObject) {
 export function generateQrcode(adminAddress, traderAddress, consumerAddress) {
   const traderObject = createTraderObject();
   const codeId = 'machuom_' + Math.random().toString(36).substring(2, 8) + '_' + uuidv4();
+  localStorage.getItem('awaitingForLiquidity');
   
   const qrObject = {
     id: codeId,
@@ -121,7 +141,9 @@ export function generateQrcode(adminAddress, traderAddress, consumerAddress) {
   qrObject.reward = calculateCumulativeReward(qrObject);
 
   // Add the new QR code to the array
+  localStorage.getItem('awaitingForLiquidity');
   awaitingForLiquidity.push(qrObject);
+  localStorage.setItem('awaitingForLiquidity', JSON.stringify(awaitingForLiquidity));
   console.log('awaiting for liquidity array',awaitingForLiquidity)
   console.log('qr codes',qrCodes)
   console.log('traders circle',tradersCircle)
@@ -131,6 +153,7 @@ export function generateQrcode(adminAddress, traderAddress, consumerAddress) {
 export function markLiquidityAsPaid() {
   // Process each QR code waiting for liquidity individually.
   while (awaitingForLiquidity.length > 0) {
+    localStorage.getItem('awaitingForLiquidity');
     const qrObj = awaitingForLiquidity.shift(); // Remove one from awaitingForLiquidity
     // Determine the trader type from the first trader of the qrObject.
     const traderType = qrObj.tradersobject[0]?.traderType;
@@ -150,8 +173,10 @@ export function markLiquidityAsPaid() {
     } else {
       console.error("Unknown trader type for QR code:", qrObj.id);
     }
+    localStorage.setItem('awaitingForLiquidity', JSON.stringify(awaitingForLiquidity));
   }
   console.log("Liquidity marked as paid for all QR codes in awaitingForLiquidity.");
+  console.log("Updated awaitingForLiquidity:", awaitingForLiquidity);
   console.log("Updated tradersCircle:", tradersCircle);
   console.log("Updated qrCodes:", qrCodes);
   return tradersCircle || qrCodes;
@@ -169,12 +194,12 @@ window.addEventListener('DOMContentLoaded', () => {
     newProduct.addEventListener('click', () => {
       document.body.innerHTML = `
         <div class="new-product-form">
-          ${productDetailsTemplate}
+          ${newProductTemplate}
         </div>
       `;
       displayAwaitingForLiquidity();
 
-         const markButton = document.querySelector('.mark-liquidity-paid');
+      const markButton = document.querySelector('.mark-liquidity-paid');
     if (markButton) {
       markButton.addEventListener('click', () => {
         markLiquidityAsPaid();
@@ -228,10 +253,6 @@ window.addEventListener('DOMContentLoaded', () => {
 // Verify QR code: attach listener to the verify button after rendering the form
 function verifyQrCode() {
   const verifyButton = document.querySelector('.veryfy-Qr-button');
-  if (!verifyButton) {
-    console.error("Verify button not found.");
-    return;
-  }
   verifyButton.addEventListener('click', () => {
     const qrCodeInput = document.querySelector('.exist-Qrcheck-input').value;
     if (!qrCodeInput) {
@@ -239,40 +260,50 @@ function verifyQrCode() {
       return;
     }
     
-    // Get the tradersCircle from localStorage or in-memory array (assuming tradersCircle is defined globally)
+    // Retrieve your stored traders (or use in-memory array)
     const storedTraders = JSON.parse(localStorage.getItem('tradersCircle')) || tradersCircle;
     const qrObject = storedTraders.find(qr => qr.id === qrCodeInput);
     
     if (qrObject) {
       console.log("QR Code verified:", qrObject);
+      // Render a form that displays stored details, 
+      // but leaves the price input empty for the user to fill in.
       document.body.innerHTML = `
         <div class="qr-code-details">
           <div><strong>QR Code ID:</strong> ${qrObject.id}</div>
-          <input type="text" class="object-name-input" placeholder="Object name" value="${qrObject.details.objectName || ''}">
-          <input type="text" class="object-description-input" placeholder="Object description" value="${qrObject.details.objectDescription || ''}">
-          <input type="text" class="object-type-input" placeholder="Object type" value="${qrObject.details.objectType || ''}">
-          <input type="text" class="object-category-input" placeholder="Object category" value="${qrObject.details.objectCategory || ''}">
-          <input type="number" class="object-price-input" placeholder="Object price ksh" value="${qrObject.details.objectPrice || ''}">
+  
+          <input type="text" class="object-name-input" placeholder="Object name" value="${qrObject.details?.objectName || ''}">
+  
+          <input type="text" class="object-description-input" placeholder="Object description" value="${qrObject.details?.objectDescription || ''}">
+  
+          <input type="text" class="object-type-input" placeholder="Object type" value="${qrObject.details?.objectType || ''}">
+  
+          <input type="text" class="object-category-input" placeholder="Object category" value="${qrObject.details?.objectCategory || ''}">
+  
+          <!-- Notice the price field is empty -->
+          <input type="number" class="object-price-input" placeholder="Object price ksh">
+  
           <select class="trader-type-select">
-            <option value="intemidiate" ${qrObject.traderType === 'intemidiate' ? 'selected' : ''}>intemidiate</option>
-            <option value="retailer" ${qrObject.traderType === 'retailer' ? 'selected' : ''}>retailer</option>
+            <option value="intemidiate" ${qrObject.tradersobject[0]?.traderType === 'intemidiate' ? 'selected' : ''}>intemidiate</option>
+            <option value="retailer" ${qrObject.tradersobject[0]?.traderType === 'retailer' ? 'selected' : ''}>retailer</option>
           </select>
+  
           <button class="Existing-item-Add">add item</button>
           <ul class="awaiting-list" ></ul>
           <button class='mark-liquidity-paid'>mark liquidity as paid</button>
           <ul class="traders-circle-list"></ul>
           <ul class="qr-codes-list"></ul>
-        </div>`
-        displayAwaitingForLiquidity();
-      
-      // Now attach listener to the new button (using the locally verified qrObject)
+        </div>`;
+        
+      // Attach a listener to handle the updated inputs
       attachExistingItemAddListener(qrObject);
+      attachMarkLiquidityListener();
+      renderQrDetails(); // Render the details of the QR code
     } else {
       console.error("QR Code not found in tradersCircle:", qrCodeInput);
     }
   });
 }
-
 // Guard function: checks whether a QR code is already in the qrCodes array.
 function isDuplicate(qr) {
   return qrCodes.some(item => item.id === qr.id);
@@ -289,75 +320,8 @@ function addToQrCodesIfNotDuplicate(qr) {
   }
 }
 
-// Attach the event listener to the "Existing-item-Add" button in the rendered form.
-function attachExistingItemAddListener(qrObject) {
-  const addItemBtn = document.querySelector('.Existing-item-Add');
-  addItemBtn.addEventListener('click', () => {
-    // Gather updated details from the form
-    const updatedQr = { ...qrObject };
-    updatedQr.details.objectName = document.querySelector('.object-name-input')?.value;
-    updatedQr.details.objectDescription = document.querySelector('.object-description-input')?.value;
-    updatedQr.details.objectType = document.querySelector('.object-type-input')?.value;
-    updatedQr.details.objectCategory = document.querySelector('.object-category-input')?.value;
-    updatedQr.details.objectPrice = document.querySelector('.object-price-input')?.value;
-    updatedQr.traderType = document.querySelector('.trader-type-select')?.value;
-    
-    if (!updatedQr.traderType) {
-      console.error("Trader type not selected.");
-      return;
-    }
-    
-    if (updatedQr.traderType.toLowerCase() === 'intemidiate') {
-      // For intemidiate, update in tradersCircle:
-      const index = tradersCircle.findIndex(item => item.id === updatedQr.id);
-      if (index > -1) {
-        // Replace the old version with the new updated version.
-        tradersCircle.splice(index, 1, updatedQr);
-        console.log(`QR Code ${updatedQr.id} updated in tradersCircle.`);
-      } else {
-        // Not already present, so add.
-        tradersCircle.push(updatedQr);
-        console.log(`QR Code ${updatedQr.id} added to tradersCircle.`);
-      }
-    } else if (updatedQr.traderType.toLowerCase() === 'retailer') {
-      // Remove from tradersCircle if it exists...
-      const index = tradersCircle.findIndex(item => item.id === updatedQr.id);
-      if (index > -1) {
-        tradersCircle.splice(index, 1);
-        localStorage.setItem('tradersCircle', JSON.stringify(tradersCircle));
-        console.log(`QR Code ${updatedQr.id} removed from tradersCircle.`);
-      }
-      // Then add to qrCodes array.
-      addToQrCodesIfNotDuplicate(updatedQr);
-    } else {
-      console.error("Unknown trader type selected:", updatedQr.traderType);
-    }
-  });
-} 
-
-document.addEventListener('DOMContentLoaded', () => {
-  const deleteLocalStorageButton = document.querySelector('.delete-Local-Storage');
-
-  deleteLocalStorageButton.addEventListener('click', () => {
-    localStorage.removeItem('qrCodes');
-    localStorage.removeItem('tradersCircle');
-    qrCodes = [];
-    tradersCircle = [];
-    console.log("Local storage cleared. qrCodes and tradersCircle are now empty.");
-  }); 
-});
-
-//calculating total liquidity in awaaitingForLiquidity
-function calculateTotalLiquidity() {
-  return awaitingForLiquidity.reduce((total, qr) => {
-    const liquidity = qr.tradersobject.reduce((sum, trader) => {
-      return sum + Number(trader.ownLiquidityInput);
-    }, 0);
-    return total + liquidity;
-  }, 0);
-}
-
-function displayAwaitingForLiquidity() {
+function renderQrDetails() {
+  localStorage.getItem('awaitingForLiquidity');
   const awaitingList = document.querySelector('.awaiting-list');
   if (!awaitingList) {
     console.error("Element with class 'awaiting-list' not found.");
@@ -376,9 +340,88 @@ function displayAwaitingForLiquidity() {
     listItem.textContent = `Code: ${qr.id}, Object Name: ${objectName}, Traders Liquidity:ksh ${tradersLiquidity} 
     total liquidity:ksh ${totalLiquidity}`;
     awaitingList.appendChild(listItem);
+
+    localStorage.setItem('awaitingForLiquidity', JSON.stringify(awaitingForLiquidity));
   });
 }
 
+// Attach the event listener to the "Existing-item-Add" button in the rendered form.
+function attachExistingItemAddListener(qrObject) {
+  const addItemBtn = document.querySelector('.Existing-item-Add');
+  addItemBtn.addEventListener('click', () => {
+    // Create a new trader object from form inputs.
+    const newTrader = createTraderObject();
+    newTrader.details.objectName = document.querySelector('.object-name-input')?.value;
+    newTrader.details.objectDescription = document.querySelector('.object-description-input')?.value;
+    newTrader.details.objectType = document.querySelector('.object-type-input')?.value;
+    newTrader.details.objectCategory = document.querySelector('.object-category-input')?.value;
+    newTrader.details.objectPrice = document.querySelector('.object-price-input')?.value;
+    newTrader.traderType = document.querySelector('.trader-type-select')?.value;
+
+    if (!newTrader.traderType) {
+        console.error("Trader type not selected.");
+        return;
+    }
+    // Push the new trader into the tradersobject array.
+    // Push the new trader into the tradersobject array.
+    qrObject.tradersobject.push(newTrader);
+    localStorage.getItem('awaitingForLiquidity');
+    awaitingForLiquidity.push(qrObject);
+    localStorage.setItem('awaitingForLiquidity', JSON.stringify(awaitingForLiquidity));
+    // Update the qrObject.details to reflect the new details.
+    qrObject.details = newTrader.details;
+    console.log(`Added new trader to QR code ${qrObject.id}:`, qrObject);
+    renderQrDetails();
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const deleteLocalStorageButton = document.querySelector('.delete-Local-Storage');
+
+  deleteLocalStorageButton.addEventListener('click', () => {
+    localStorage.removeItem('qrCodes');
+    localStorage.removeItem('tradersCircle');
+    qrCodes = [];
+    tradersCircle = [];
+    console.log("Local storage cleared. qrCodes and tradersCircle are now empty.");
+  }); 
+});
+
+//calculating total liquidity in awaaitingForLiquidity
+function calculateTotalLiquidity() {
+  localStorage.getItem('awaitingForLiquidity');
+  return awaitingForLiquidity.reduce((total, qr) => {
+    const liquidity = qr.tradersobject.reduce((sum, trader) => {
+      return sum + Number(trader.ownLiquidityInput);
+    }, 0);
+    return total + liquidity;
+  }, 0);
+}
+
+function displayAwaitingForLiquidity() {
+  localStorage.getItem('awaitingForLiquidity');
+  const awaitingList = document.querySelector('.awaiting-list');
+  if (!awaitingList) {
+    console.error("Element with class 'awaiting-list' not found.");
+    return;
+  }
+  awaitingList.innerHTML = ''; // Clear existing content
+  
+  awaitingForLiquidity.forEach(qr => {
+    // Ensure qr.details exists before reading properties.
+    const objectName = qr.details && qr.details.objectName ? qr.details.objectName : "Unknown";
+    const tradersLiquidity = qr.tradersobject.map(trader => {
+      return `${trader.traderType} (${trader.traderAdress}) - Liquidity: ${trader.ownLiquidityInput}`;
+    }).join(', ');
+    const totalLiquidity = calculateTotalLiquidity();
+    const listItem = document.createElement('li');
+    listItem.textContent = `Code: ${qr.id}, Object Name: ${objectName}, Traders Liquidity:ksh ${tradersLiquidity} 
+    total liquidity:ksh ${totalLiquidity}`;
+    awaitingList.appendChild(listItem);
+
+    localStorage.setItem('awaitingForLiquidity', JSON.stringify(awaitingForLiquidity));
+  });
+}
 window.addEventListener('DOMContentLoaded', () => {
   displayAwaitingForLiquidity();
 });
@@ -410,7 +453,7 @@ function displayQrCodes() {
     return;
   }
   qrCodesList.innerHTML = ''; // Clear existing content
-  
+ 
   qrCodes.forEach(qr => {
     // Ensure qr.details exists before reading properties.
     const objectName = qr.details && qr.details.objectName ? qr.details.objectName : "Unknown";
@@ -421,4 +464,22 @@ function displayQrCodes() {
 }
 window.addEventListener('DOMContentLoaded', () => {
   displayQrCodes();
+});
+
+function attachMarkLiquidityListener() {
+  const markLiquidityBtn = document.querySelector('.mark-liquidity-paid');
+  if (!markLiquidityBtn) {
+    console.error("mark-liquidity-paid button not found.");
+    return;
+  }
+  markLiquidityBtn.addEventListener('click', () => {
+    markLiquidityAsPaid();
+    displayAwaitingForLiquidity();
+    displayTradersCircle();
+    displayQrCodes();
+    console.log("Liquidity marked as paid.");
+  });
+}
+window.addEventListener('DOMContentLoaded', () => {
+  attachMarkLiquidityListener();
 });
