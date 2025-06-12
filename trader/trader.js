@@ -155,11 +155,18 @@ export function markLiquidityAsPaid() {
   while (awaitingForLiquidity.length > 0) {
     localStorage.getItem('awaitingForLiquidity');
     const qrObj = awaitingForLiquidity.shift(); // Remove one from awaitingForLiquidity
+
+    const existingIndex = tradersCircle.findIndex(item => item.id === qrObj.id);
+    if (existingIndex !== -1) {
+      // Replace the old version with the updated one.
+      tradersCircle.splice(existingIndex, 1, qrObj);
+    } else {
+      tradersCircle.push(qrObj);
+    }
     // Determine the trader type from the first trader of the qrObject.
     const traderType = qrObj.tradersobject[0]?.traderType;
     if (traderType === 'intemidiate') {
       qrObj.liquidityProvided = true;
-      tradersCircle.push(qrObj);
       localStorage.setItem('tradersCircle', JSON.stringify(tradersCircle));
     } else if (traderType === 'retailer') {
       qrObj.liquidityProvided = true;
@@ -362,15 +369,27 @@ function attachExistingItemAddListener(qrObject) {
         console.error("Trader type not selected.");
         return;
     }
-    // Push the new trader into the tradersobject array.
-    // Push the new trader into the tradersobject array.
+     // Append the new trader to the existing qrObject's tradersobject array.
     qrObject.tradersobject.push(newTrader);
-    localStorage.getItem('awaitingForLiquidity');
-    awaitingForLiquidity.push(qrObject);
-    localStorage.setItem('awaitingForLiquidity', JSON.stringify(awaitingForLiquidity));
-    // Update the qrObject.details to reflect the new details.
+    
+    // Optionally, update qrObject.details to reflect the newest trader (if required)
     qrObject.details = newTrader.details;
-    console.log(`Added new trader to QR code ${qrObject.id}:`, qrObject);
+    
+    // Check if the qrObject is already in the awaitingForLiquidity array
+    const index = awaitingForLiquidity.findIndex(qr => qr.id === qrObject.id);
+    if (index !== -1) {
+      // Update the existing qrObject entry.
+      awaitingForLiquidity[index] = qrObject;
+    } else {
+      // If not present, add it only once.
+      awaitingForLiquidity.push(qrObject);
+    }
+    
+    // Update localStorage with the modified array.
+    localStorage.setItem('awaitingForLiquidity', JSON.stringify(awaitingForLiquidity));
+    console.log(`Updated QR code ${qrObject.id} with new trader:`, qrObject);
+    
+    // Refresh the rendered details.
     renderQrDetails();
   });
 }
@@ -381,8 +400,10 @@ document.addEventListener('DOMContentLoaded', () => {
   deleteLocalStorageButton.addEventListener('click', () => {
     localStorage.removeItem('qrCodes');
     localStorage.removeItem('tradersCircle');
+    localStorage.removeItem('awaitingForLiquidity');
     qrCodes = [];
     tradersCircle = [];
+    awaitingForLiquidity = [];
     console.log("Local storage cleared. qrCodes and tradersCircle are now empty.");
   }); 
 });
@@ -482,4 +503,5 @@ function attachMarkLiquidityListener() {
 }
 window.addEventListener('DOMContentLoaded', () => {
   attachMarkLiquidityListener();
+  console.log('awaiting',awaitingForLiquidity);
 });
